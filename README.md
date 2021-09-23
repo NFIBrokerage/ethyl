@@ -1,5 +1,7 @@
 # Ethyl
 
+![CI](https://github.com/NFIBrokerage/mint_web_socket/workflows/CI/badge.svg)
+
 A pure and non-general subset of Elixir
 
 ### About
