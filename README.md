@@ -30,7 +30,7 @@ program could pass in some data structure representing an HTTP request to
 an ethyl program and receive an encoded frame as output.
 
 Ethyl enforces a separation between purely functional code and impure
-code. Impure code is oftentimes stateful and/or imperative in nature.< Enforcing
+code. Impure code is oftentimes stateful and/or imperative in nature. Enforcing
 a boundary between the two can allow one to switch out conceptual logical cores
 of applications separately from the machinery that drives the logic. Because
 of their purity, Ethyl programs can be released as fast as they can be
