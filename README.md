@@ -46,7 +46,7 @@ There are a few behavior changes from Elixir built-ins:
 - `import/1` accepts a binary as an argument, allowing one to import the value
   of a separate Ethyl file by path
     ```elixir
-    my_value = import "my_value.exs"
+    my_value = import "./my_value.exs"
     ```
 
 There are also some restrictions:
