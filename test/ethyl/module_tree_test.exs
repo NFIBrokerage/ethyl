@@ -17,6 +17,11 @@ defmodule Ethyl.ModuleTreeTest do
   end
 
   defp fixture(_c) do
+    Code.ensure_loaded!(MyModuleTree)
+    Code.ensure_loaded!(MyModuleTree.Foo)
+    Code.ensure_loaded!(MyModuleTree.Foo.Bar)
+    Code.ensure_loaded!(MyModuleTree.Foo.Bar.Baz)
+
     fixture =
       :code.all_loaded()
       |> Enum.filter(fn {module, _filename} ->
