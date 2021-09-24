@@ -70,6 +70,21 @@ defmodule Ethyl.LintTest do
         Foo.Bar.foo()
       end
     end
+
+    test "given a fixture aliases multiple things to the same name" do
+      fixture =
+        quote do
+          alias Foo.Bar
+          alias Baz.Bar
+          Bar.foo()
+        end
+
+      assert_expanded fixture do
+        :ok
+        :ok
+        Baz.Bar.foo()
+      end
+    end
   end
 
   defp strip_meta(ast)
