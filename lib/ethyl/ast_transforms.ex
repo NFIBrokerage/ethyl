@@ -226,4 +226,42 @@ defmodule Ethyl.AstTransforms do
   def strip_meta({a, _meta, b}), do: {strip_meta(a), [], strip_meta(b)}
   def strip_meta(nodes) when is_list(nodes), do: Enum.map(nodes, &strip_meta/1)
   def strip_meta(ast), do: ast
+
+  @doc """
+  Expands all calls to apply/3
+
+  Calls to apply/3 are applied as a preprocessor step. Dynamic apply/3 is
+  disallowed.
+
+  Dynamic apply/2 is allowed.
+  """
+  @spec expand_apply_3(Macro.t()) :: Macro.t()
+  def expand_apply_3(ast) do
+    Macro.prewalk(ast, &do_expand_apply_3/1)
+  end
+
+  defp do_expand_apply_3(ast)
+
+  defp do_expand_apply_3(
+         mfa({:__aliases__, _, [:Kernel]}, :apply, [module, function, args], _) =
+           ast
+       ) do
+    expanded_call =
+      quote do
+        unquote(module).unquote(function)(unquote_splicing(args))
+      end
+
+    case module do
+      module when is_atom(module) ->
+        expanded_call
+
+      {:__aliases__, _, _} ->
+        expanded_call
+
+      _ ->
+        ast
+    end
+  end
+
+  defp do_expand_apply_3(ast), do: ast
 end

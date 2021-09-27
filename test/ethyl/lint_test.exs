@@ -36,5 +36,14 @@ defmodule Ethyl.LintTest do
       # note: later imports take precedence
       assert lint.description =~ "NaiveDateTime.utc_now/0"
     end
+
+    test "given a program uses apply/3 to get around banned functions" do
+      fixture = Source.new("test/corpus/apply_banned_function.exs")
+      assert [a, b, c] = Lint.lint(fixture)
+      assert a.description =~ "DateTime.utc_now/0"
+      assert b.description =~ ":erlang.binary_to_term/1"
+      # dynamic apply is not expanded, but caught by the linter
+      assert c.description =~ "Kernel.apply/3"
+    end
   end
 end
