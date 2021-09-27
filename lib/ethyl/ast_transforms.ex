@@ -10,6 +10,12 @@ defmodule Ethyl.AstTransforms do
     end
   end
 
+  defmacro module({:__aliases__, _meta, module_path}) do
+    quote do
+      {:__aliases__, _, unquote(module_path)}
+    end
+  end
+
   # coveralls-ignore-start
   defguard is_mfa(m, f, a)
            when (is_atom(m) or is_tuple(m)) and is_atom(f) and is_list(a)
@@ -169,6 +175,26 @@ defmodule Ethyl.AstTransforms do
     {ast, imports}
   end
 
+  # catches the very specific case of an imported function in a function
+  # capture
+  defp do_expand_imports(
+         {:&, _, [mfa(module(Kernel), :/, [{function, _, nil}, arity], _meta)]} =
+           ast,
+         imports
+       )
+       when is_integer(arity) do
+    ast =
+      case Map.fetch(imports, {function, arity}) do
+        {:ok, module} ->
+          quote(do: &(unquote(module).unquote(function) / unquote(arity)))
+
+        :error ->
+          ast
+      end
+
+    {ast, imports}
+  end
+
   # attempt to expand a function call
   defp do_expand_imports({func, _, args} = ast, imports)
        when is_atom(func) and is_list(args) and func not in @operator_functions do
@@ -243,8 +269,7 @@ defmodule Ethyl.AstTransforms do
   defp do_expand_apply_3(ast)
 
   defp do_expand_apply_3(
-         mfa({:__aliases__, _, [:Kernel]}, :apply, [module, function, args], _) =
-           ast
+         mfa(module(Kernel), :apply, [module, function, args], _) = ast
        ) do
     expanded_call =
       quote do

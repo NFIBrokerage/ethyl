@@ -45,5 +45,16 @@ defmodule Ethyl.LintTest do
       # dynamic apply is not expanded, but caught by the linter
       assert c.description =~ "Kernel.apply/3"
     end
+
+    test "given a program uses function captures to get around banned functions" do
+      fixture = Source.new("test/corpus/capture_banned_function.exs")
+      assert [a, b, c, d, e] = Lint.lint(fixture)
+      # note: currently we lose arity on these :(
+      assert a.description =~ "DateTime.utc_now/0"
+      assert b.description =~ ":erlang.binary_to_term/0"
+      assert c.description =~ "Kernel.apply/0"
+      assert d.description =~ "Kernel.apply/3"
+      assert e.description =~ "DateTime.utc_now/0"
+    end
   end
 end
