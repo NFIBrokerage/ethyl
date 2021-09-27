@@ -27,6 +27,7 @@ defmodule Ethyl do
     |> AstTransforms.expand_aliases()
     |> AstTransforms.alter_compile_directives(context)
     |> AstTransforms.expand_imports()
+    |> AstTransforms.expand_apply_3()
   end
 
   @doc """
