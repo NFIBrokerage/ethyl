@@ -2,7 +2,7 @@ defmodule Ethyl.AstTransforms do
   @moduledoc false
   # functions that transform the AST
 
-  @operator_functions ~w[= * / .]a
+  @operator_functions ~w[.]a
 
   defmacro mfa(m, f, as, meta) do
     quote do
@@ -16,6 +16,10 @@ defmodule Ethyl.AstTransforms do
 
   # coveralls-ignore-stop
 
+  @doc """
+  Alter defmodule/2 and import/1 behavior to work more straightforward
+  for an expression based language
+  """
   def alter_compile_directives(ast, context) do
     {new_ast, _context} =
       Macro.postwalk(ast, context, &alter_compiler_directives/2)
@@ -111,7 +115,14 @@ defmodule Ethyl.AstTransforms do
 
   defp strip_alias_tag({:__aliases__, _meta, module_path}), do: module_path
 
-  # YARD imports are lexical, not global
+  @doc """
+  Expands import/1 and import/2 statements
+
+  Replaces the import with a require/1 and replaces any instances it can find
+  with a fully qualified module call.
+
+  YARD imports are lexical, not global.
+  """
   def expand_imports(ast) do
     imports =
       Kernel

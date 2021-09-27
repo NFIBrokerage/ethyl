@@ -10,22 +10,6 @@ defmodule Ethyl.Lint.MfaAllowlist do
 
   @behaviour Lint
 
-  @banned_kernel_functions ~w[
-    alias!
-    apply
-    binding
-    exit
-    make_ref
-    node
-    send
-    self
-    spawn
-    spawn_link
-    spawn_monitor
-    use
-    var!
-  ]a
-
   @allowlist [
                Atom,
                Base,
@@ -36,7 +20,22 @@ defmodule Ethyl.Lint.MfaAllowlist do
                Float,
                Function,
                Integer,
-               {Kernel, except: Enum.map(@banned_kernel_functions, &{&1, :*})},
+               {Kernel,
+                except: [
+                  alias!: :*,
+                  binding: :*,
+                  exit: :*,
+                  apply: 3,
+                  make_ref: :*,
+                  node: :*,
+                  self: :*,
+                  send: :*,
+                  spawn: :*,
+                  spawn_link: :*,
+                  spawn_monitor: :*,
+                  use: :*,
+                  var!: :*
+                ]},
                Module,
                {NaiveDateTime, except: [utc_now: :*, local_now: :*]},
                Regex,
@@ -72,17 +71,6 @@ defmodule Ethyl.Lint.MfaAllowlist do
     end
   end
 
-  # defp traverse({function, meta, args}, lints, source)
-  #      when function in @banned_kernel_functions and is_list(args) do
-  #   module = [:Kernel]
-  #   arity = length(args)
-  #   if allowed?(module, function, arity) do
-  #     lints
-  #   else
-  #     [new_lint(module, function, arity, meta, source) | lints]
-  #   end
-  # end
-
   defp traverse(_ast, lints, _source) do
     lints
   end
@@ -103,7 +91,7 @@ defmodule Ethyl.Lint.MfaAllowlist do
       line: Keyword.get(meta, :line),
       description:
         "#{m |> to_module_key |> inspect}.#{f}/#{arity}" <>
-          "is not an allowed function call"
+          " is not an allowed function call"
     }
   end
 
