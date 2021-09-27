@@ -4,7 +4,8 @@ defmodule Ethyl.Lint do
   """
 
   @known_linters [
-    Ethyl.Lint.MfaAllowlist
+    Ethyl.Lint.MfaAllowlist,
+    Ethyl.Lint.DynamicFunctionApplication
   ]
 
   @type t :: %__MODULE__{}
@@ -30,14 +31,9 @@ defmodule Ethyl.Lint do
   def traverse(source, traversal_fn, acc \\ [])
 
   def traverse(%Ethyl.Source{} = source, traversal_fn, acc)
-      when is_function(traversal_fn, 2) do
-    traverse(source.ast, traversal_fn, acc)
-  end
-
-  def traverse(source, traversal_fn, acc)
-      when is_tuple(source) and is_function(traversal_fn, 2) do
+      when is_function(traversal_fn, 3) do
     {_new_ast, new_acc} =
-      Macro.prewalk(source, acc, &{&1, traversal_fn.(&1, &2)})
+      Macro.prewalk(source.ast, acc, &{&1, traversal_fn.(&1, &2, source)})
 
     new_acc
   end

@@ -1,12 +1,10 @@
 defmodule Ethyl.Lint.MfaAllowlist do
   @moduledoc """
-  A linter that blocks access to functions that read from system state
+  A linter that blocks access to functions that perform impure side-effects
   """
 
   alias Ethyl.Lint
   require Ethyl.AstTransforms, as: AstTransforms
-
-  # configuration, datetime, etc.
 
   @behaviour Lint
 
@@ -54,7 +52,7 @@ defmodule Ethyl.Lint.MfaAllowlist do
   @impl Lint
   def lint(source) do
     source
-    |> Lint.traverse(&traverse(&1, &2, source))
+    |> Lint.traverse(&traverse/3)
     |> Enum.reverse()
   end
 
@@ -64,16 +62,21 @@ defmodule Ethyl.Lint.MfaAllowlist do
        when AstTransforms.is_mfa(m, f, as) do
     arity = length(as)
 
-    if allowed?(m, f, arity) do
-      lints
-    else
+    with true <- module?(m),
+         false <- allowed?(m, f, arity) do
       [new_lint(m, f, arity, meta, source) | lints]
+    else
+      _ -> lints
     end
   end
 
   defp traverse(_ast, lints, _source) do
     lints
   end
+
+  defp module?({:__aliases__, _, _}), do: true
+  defp module?(m) when is_atom(m), do: true
+  defp module?(_), do: false
 
   defp allowed?(m, f, arity) do
     with {:ok, fa_map} <- Map.fetch(@allowlist, to_module_key(m)),

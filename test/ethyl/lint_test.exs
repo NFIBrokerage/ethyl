@@ -56,5 +56,11 @@ defmodule Ethyl.LintTest do
       assert d.description =~ "Kernel.apply/3"
       assert e.description =~ "DateTime.utc_now/0"
     end
+
+    test "given a program uses bindings to get around banned functions" do
+      fixture = Source.new("test/corpus/dynamic_function_application.exs")
+      assert [lint] = Lint.lint(fixture)
+      assert lint.description =~ "module.utc_now()"
+    end
   end
 end
