@@ -1,94 +1,40 @@
 defmodule Ethyl.LintTest do
   use ExUnit.Case, async: true
 
-  defmacrop assert_expanded(lhs, do: rhs) do
-    quote do
-      lhs =
-        unquote(lhs)
-        |> Ethyl.Lint.expand_aliases()
-        |> strip_meta()
+  alias Ethyl.{Lint, Source}
 
-      rhs = strip_meta(unquote(Macro.escape(rhs)))
+  describe "a pass of linting produces expected lints" do
+    test "given a program with unsafe function calls" do
+      fixture = Source.new("test/corpus/disallowed_function_calls.exs")
+      assert [a, b, c, d] = Lint.lint(fixture)
+      assert a.description =~ "File.read!/1"
+      assert b.description =~ "DateTime.utc_now/0"
+      assert c.description =~ "Kernel.send/2"
+      assert d.description =~ "Kernel.self/0"
+    end
 
-      assert lhs == rhs
+    test "given a program that imports a program with unsafe function calls" do
+      fixture = Source.new("test/corpus/import_disallowed.exs")
+      # each file should be linted distinctly, nothing is wrong with a file
+      # that just imports another file
+      assert Lint.lint(fixture) == []
+    end
+
+    test "given a program uses imports to get around banned functions" do
+      fixture = Source.new("test/corpus/import_hack.exs")
+      assert lints = Lint.lint(fixture)
+      assert length(lints) == 2
+
+      for lint <- lints do
+        assert lint.description =~ "is not an allowed function call"
+      end
+    end
+
+    test "given a program uses multiple imports to get around banned functions" do
+      fixture = Source.new("test/corpus/multi_import.exs")
+      assert [lint] = Lint.lint(fixture)
+      # note: later imports take precedence
+      assert lint.description =~ "NaiveDateTime.utc_now/0"
     end
   end
-
-  describe "expand_aliases/1 correctly expands" do
-    test "given a simple fixture using alias/1" do
-      fixture =
-        quote do
-          alias File.Stream
-          Stream.foo()
-        end
-
-      assert_expanded fixture do
-        :ok
-        File.Stream.foo()
-      end
-    end
-
-    test "given a simple fixture using alias/2" do
-      fixture =
-        quote do
-          alias Application, as: App
-          App.foo()
-        end
-
-      assert_expanded fixture do
-        :ok
-        Application.foo()
-      end
-    end
-
-    test "given a fixture that aliases multiple times" do
-      fixture =
-        quote do
-          alias Foo, as: F
-          alias F, as: B
-          B.foo()
-        end
-
-      assert_expanded fixture do
-        :ok
-        :ok
-        Foo.foo()
-      end
-    end
-
-    test "given a fixture that does nested aliasing" do
-      fixture =
-        quote do
-          alias Foo, as: F
-          alias F.Bar, as: B
-          B.foo()
-        end
-
-      assert_expanded fixture do
-        :ok
-        :ok
-        Foo.Bar.foo()
-      end
-    end
-
-    test "given a fixture aliases multiple things to the same name" do
-      fixture =
-        quote do
-          alias Foo.Bar
-          alias Baz.Bar
-          Bar.foo()
-        end
-
-      assert_expanded fixture do
-        :ok
-        :ok
-        Baz.Bar.foo()
-      end
-    end
-  end
-
-  defp strip_meta(ast)
-  defp strip_meta({a, _meta, b}), do: {strip_meta(a), [], strip_meta(b)}
-  defp strip_meta(nodes) when is_list(nodes), do: Enum.map(nodes, &strip_meta/1)
-  defp strip_meta(ast), do: ast
 end

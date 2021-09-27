@@ -3,47 +3,42 @@ defmodule Ethyl.Lint do
   Functions for linting Ethyl code
   """
 
-  @doc false
-  # strip the AST of all aliases
-  # this must be performed as a pre-processing step in order to properly
-  # identify which modules/functions/arities are being called
-  def expand_aliases(ast) do
-    {ast, _aliases} = Macro.postwalk(ast, [], &do_expand_aliases/2)
-    ast
+  @known_linters [
+    Ethyl.Lint.MfaAllowlist
+  ]
+
+  @type t :: %__MODULE__{}
+
+  defstruct [:linter, :file, :line, :description]
+
+  @callback lint(source :: Ethyl.Source.t()) :: [t()]
+
+  @doc """
+  Lints a source file against all known linters
+  """
+  def lint(source) do
+    Enum.flat_map(@known_linters, & &1.lint(source))
   end
 
-  defp do_expand_aliases(ast, aliases)
+  @doc """
+  Traverses the AST in search of lint issues
 
-  # alias/2
-  defp do_expand_aliases({:alias, _, [module, [as: alias]]}, aliases) do
-    {:ok, [{strip_alias_tag(alias), strip_alias_tag(module)} | aliases]}
+  This function uses `Macro.prewalk/3` under the hood. The `traversal_fn`
+  must be a function of arity 2 taking the AST and the accumulator as arguments.
+  `traversal_fn` should return a 2-tuple of `{ast, lints}`
+  """
+  def traverse(source, traversal_fn, acc \\ [])
+
+  def traverse(%Ethyl.Source{} = source, traversal_fn, acc)
+      when is_function(traversal_fn, 2) do
+    traverse(source.ast, traversal_fn, acc)
   end
 
-  # alias/1
-  defp do_expand_aliases({:alias, _, [{:__aliases__, _, module_path}]}, aliases) do
-    {:ok, [{Enum.take(module_path, -1), module_path} | aliases]}
+  def traverse(source, traversal_fn, acc)
+      when is_tuple(source) and is_function(traversal_fn, 2) do
+    {_new_ast, new_acc} =
+      Macro.prewalk(source, acc, &{&1, traversal_fn.(&1, &2)})
+
+    new_acc
   end
-
-  defp do_expand_aliases({:__aliases__, meta, path}, aliases) do
-    {{:__aliases__, meta, expand_alias(path, aliases)}, aliases}
-  end
-
-  defp do_expand_aliases(ast, aliases), do: {ast, aliases}
-
-  defp expand_alias(module_path, aliases) do
-    Enum.reduce(aliases, module_path, fn {alias, expanded}, module_path ->
-      case sublist_rest(alias, module_path) do
-        {:ok, rest} -> expanded ++ rest
-        :error -> module_path
-      end
-    end)
-  end
-
-  # is as an ordered subset of bs? if so, return {:ok, rest_bs} else :error
-  defp sublist_rest(as, bs)
-  defp sublist_rest([e | as], [e | bs]), do: sublist_rest(as, bs)
-  defp sublist_rest([], bs), do: {:ok, bs}
-  defp sublist_rest(_as, _bs), do: :error
-
-  defp strip_alias_tag({:__aliases__, _meta, module_path}), do: module_path
 end

@@ -3,7 +3,7 @@ defmodule Ethyl do
   A non-general, purely functional subset of Elixir
   """
 
-  alias Ethyl.Context
+  alias Ethyl.{AstTransforms, Context}
 
   @doc """
   Compiles an ethyl reduction
@@ -23,52 +23,10 @@ defmodule Ethyl do
   @spec from_elixir_ast(ast :: tuple(), context :: Context.t()) ::
           ast :: tuple()
   def from_elixir_ast(ast, context) do
-    {new_ast, _context} = Macro.postwalk(ast, context, &transpile/2)
-
-    new_ast
-  end
-
-  # We transpile defmodule/2 to do two things.
-  # Usually defmodule/2 is an imperative language feature which you use to
-  # say "hey go compile me this quote block as this name (atom)". In ethyl,
-  # defmodule/2 defines a value (atom) which you may bind, and that binding
-  # can be used as the reference to the module. You cannot use the module name
-  # as written.
-  defp transpile(
-         {:defmodule, defmodule_meta,
-          [{:__aliases__, alias_meta, alias}, body]},
-         context
-       ) do
-    modulename = {:__aliases__, alias_meta, [context.id | alias]}
-    moduledef = {:defmodule, defmodule_meta, [modulename, body]}
-
-    ast =
-      quote do
-        unquote(moduledef)
-        unquote(modulename)
-      end
-
-    {ast, context}
-  end
-
-  defp transpile({:import, _meta, [path]}, context) when is_binary(path) do
-    ast =
-      quote do
-        {value, _bindings} =
-          Ethyl.eval_file!(
-            Path.join(__DIR__, unquote(path)),
-            unquote(Macro.escape(context))
-          )
-
-        value
-      end
-
-    {ast, context}
-  end
-
-  defp transpile(ast, context) do
-    # IO.inspect(ast)
-    {ast, context}
+    ast
+    |> AstTransforms.expand_aliases()
+    |> AstTransforms.alter_compile_directives(context)
+    |> AstTransforms.expand_imports()
   end
 
   @doc """
