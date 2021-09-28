@@ -9,6 +9,7 @@ defmodule Ethyl.Lint.MfaAllowlist do
   @behaviour Lint
 
   @allowlist [
+               Access,
                Atom,
                Base,
                Bitwise,
@@ -34,6 +35,7 @@ defmodule Ethyl.Lint.MfaAllowlist do
                   use: :*,
                   var!: :*
                 ]},
+               Map,
                Module,
                {NaiveDateTime, except: [utc_now: :*, local_now: :*]},
                Regex,
