@@ -3,8 +3,8 @@ defmodule Ethyl.Lint.MfaAllowlist do
   A linter that blocks access to functions that perform impure side-effects
   """
 
-  alias Ethyl.Lint
-  require Ethyl.AstTransforms, as: AstTransforms
+  alias Ethyl.{Lint, Lint.Helpers}
+  require Ethyl.AstTransforms, as: Ast
 
   @behaviour Lint
 
@@ -47,42 +47,66 @@ defmodule Ethyl.Lint.MfaAllowlist do
                {Ethyl, only: [eval_file!: 2]},
                {Ethyl.ModuleTree, only: [module_in: 2]}
              ]
-             |> Lint.Helpers.create_allow_list()
+             |> Helpers.create_allow_list()
 
   @impl Lint
   def lint(source) do
     source
-    |> Lint.traverse(&traverse/3)
+    |> Lint.traverse(&traverse/3, %{lints: [], allowlist: @allowlist})
+    |> Map.fetch!(:lints)
     |> Enum.reverse()
   end
 
-  defp traverse(ast, lints, source)
+  defp traverse(ast, state, source)
 
-  defp traverse(AstTransforms.mfa(m, f, as, meta), lints, source)
-       when AstTransforms.is_mfa(m, f, as) do
+  defp traverse(
+         Ast.mfa(
+           Ast.module(Kernel),
+           :defmodule,
+           [{:__aliases__, _, module_path}, _body],
+           _meta
+         ),
+         state,
+         source
+       ) do
+    module =
+      module_path
+      |> Enum.reject(&(&1 == source.context.id))
+      |> Module.concat()
+
+    update_in(
+      state.allowlist,
+      &Helpers.allowlist_module(&1, to_module_key(module))
+    )
+  end
+
+  defp traverse(Ast.mfa(m, f, as, meta), state, source)
+       when Ast.is_mfa(m, f, as) do
     arity = length(as)
 
     with true <- module?(m),
-         false <- allowed?(m, f, arity) do
-      [new_lint(m, f, arity, meta, source) | lints]
+         false <- allowed?(m, f, arity, state.allowlist) do
+      update_in(state.lints, &[new_lint(m, f, arity, meta, source) | &1])
     else
-      _ -> lints
+      _ -> state
     end
   end
 
-  defp traverse(_ast, lints, _source) do
-    lints
+  defp traverse(_ast, state, _source) do
+    state
   end
 
   defp module?({:__aliases__, _, _}), do: true
   defp module?(m) when is_atom(m), do: true
   defp module?(_), do: false
 
-  defp allowed?(m, f, arity) do
-    with {:ok, fa_map} <- Map.fetch(@allowlist, to_module_key(m)),
+  defp allowed?(m, f, arity, allowlist) do
+    with {:ok, fa_map} when is_map(fa_map) <-
+           Map.fetch(allowlist, to_module_key(m)),
          {:ok, a_list} <- Map.fetch(fa_map, f) do
       arity in a_list
     else
+      {:ok, :*} -> true
       :error -> false
     end
   end

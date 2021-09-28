@@ -17,6 +17,9 @@ defmodule EthylTest do
   end
 
   test "modules defined in ethyl inherit a global name based on their context ID" do
+    # aliases are lexical :)
+    call_foo = fn -> Foo.foo() end
+
     expression =
       ethyl do
         defmodule Foo do
@@ -26,7 +29,7 @@ defmodule EthylTest do
 
     assert is_atom(expression)
     assert expression.foo() == 42
-    assert_raise UndefinedFunctionError, fn -> Foo.foo() end
+    assert_raise UndefinedFunctionError, call_foo
   end
 
   test "basic control-flow works as expected" do
@@ -79,5 +82,15 @@ defmodule EthylTest do
     assert is_atom(expression)
     assert expression.foo() == 42
     assert_raise UndefinedFunctionError, fn -> Foo.foo() end
+  end
+
+  test "a module can be defined and captured" do
+    {expression, []} =
+      Ethyl.eval_file!(
+        "test/corpus/good/evolver.exs",
+        Ethyl.Context.from_elixir_env(__ENV__)
+      )
+
+    assert expression.([:a, :b, :c], %{counter: 0}) == %{counter: 3}
   end
 end

@@ -2,11 +2,11 @@ defmodule Ethyl.AstTransforms do
   @moduledoc false
   # functions that transform the AST
 
-  @operator_functions ~w[.]a
+  @operator_functions ~w[. / &]a
 
   defmacro mfa(m, f, as, meta) do
     quote do
-      {{:., unquote(meta), [unquote(m), unquote(f)]}, _, unquote(as)}
+      {{:., _, [unquote(m), unquote(f)]}, unquote(meta), unquote(as)}
     end
   end
 
@@ -41,7 +41,7 @@ defmodule Ethyl.AstTransforms do
   # as written.
   defp alter_compiler_directives(
          {:defmodule, defmodule_meta,
-          [{:__aliases__, alias_meta, alias}, body]},
+          [{:__aliases__, alias_meta, alias} = original_modulename, body]},
          context
        ) do
     modulename = {:__aliases__, alias_meta, [context.id | alias]}
@@ -50,6 +50,7 @@ defmodule Ethyl.AstTransforms do
     ast =
       quote do
         unquote(moduledef)
+        alias unquote(modulename), as: unquote(original_modulename)
         unquote(modulename)
       end
 
@@ -178,8 +179,7 @@ defmodule Ethyl.AstTransforms do
   # catches the very specific case of an imported function in a function
   # capture
   defp do_expand_imports(
-         {:&, _, [mfa(module(Kernel), :/, [{function, _, nil}, arity], _meta)]} =
-           ast,
+         {:&, _, [{:/, _, [{function, _, _scope}, arity]}]} = ast,
          imports
        )
        when is_integer(arity) do

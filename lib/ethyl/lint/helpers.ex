@@ -43,6 +43,10 @@ defmodule Ethyl.Lint.Helpers do
   defp functions_match?(fa, fa), do: true
   defp functions_match?({f, :*}, {f, _}), do: true
   defp functions_match?(_, _), do: false
+
+  def allowlist_module(allowlist, module) do
+    Map.put(allowlist, module, :*)
+  end
 end
 
 # coveralls-ignore-stop

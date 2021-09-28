@@ -63,4 +63,11 @@ defmodule Ethyl.LintTest do
       assert lint.description =~ "module.utc_now()"
     end
   end
+
+  test "all good fixtures survive linting" do
+    for path <- Path.wildcard("test/corpus/good/*.exs") do
+      fixture = Source.new(path)
+      assert Lint.lint(fixture) == []
+    end
+  end
 end
