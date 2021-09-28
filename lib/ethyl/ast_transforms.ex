@@ -2,12 +2,22 @@ defmodule Ethyl.AstTransforms do
   @moduledoc false
   # functions that transform the AST
 
-  @operator_functions ~w[. / & |>]a
+  @special_form_macros Kernel.SpecialForms.__info__(:macros)
+                       |> Enum.map(fn {func, _arity} -> func end)
+                       |> Enum.uniq()
+  @operator_functions ~w[. / |>]a ++
+                        (@special_form_macros -- [:receive, :quote, :unquote])
   @expandable_tags ~w[|>]a
 
   defmacro mfa(m, f, as, meta) do
     quote do
       {{:., _, [unquote(m), unquote(f)]}, unquote(meta), unquote(as)}
+    end
+  end
+
+  defmacro capture(subject, arity, meta) do
+    quote do
+      {:&, unquote(meta), [{:/, _, [unquote(subject), unquote(arity)]}]}
     end
   end
 
@@ -132,12 +142,21 @@ defmodule Ethyl.AstTransforms do
   YARD imports are lexical, not global.
   """
   def expand_imports(ast) do
-    imports =
+    kernel =
       Kernel
       |> exports()
       |> Map.new(fn {func, arity} ->
         {{func, arity}, quote(do: Kernel)}
       end)
+
+    special_forms =
+      Kernel.SpecialForms
+      |> exports()
+      |> Map.new(fn {func, arity} ->
+        {{func, arity}, quote(do: Kernel.SpecialForms)}
+      end)
+
+    imports = Map.merge(kernel, special_forms)
 
     {ast, _imports} = Macro.postwalk(ast, imports, &do_expand_imports/2)
     ast
@@ -180,7 +199,7 @@ defmodule Ethyl.AstTransforms do
   # catches the very specific case of an imported function in a function
   # capture
   defp do_expand_imports(
-         {:&, _, [{:/, _, [{function, _, _scope}, arity]}]} = ast,
+         capture({function, _, _scope}, arity, _meta) = ast,
          imports
        )
        when is_integer(arity) do

@@ -10,6 +10,12 @@ defmodule Ethyl.Lint.DynamicFunctionApplication do
   alias Ethyl.Lint
   require Ethyl.AstTransforms, as: Ast
 
+  defguardp is_elixir_module(module)
+            when is_tuple(module) and tuple_size(module) == 3 and
+                   elem(module, 0) == :__aliases__
+
+  defguardp is_erlang_module(module) when is_atom(module)
+
   @behaviour Lint
 
   @impl Lint
@@ -21,13 +27,12 @@ defmodule Ethyl.Lint.DynamicFunctionApplication do
 
   defp traverse(ast, lints, source)
 
-  defp traverse(Ast.mfa(module, _f, _a, meta) = ast, lints, source) do
-    with false <- match?({:__aliases__, _, _}, module),
-         false <- is_atom(module),
-         false <- Keyword.get(meta, :no_parens, false) do
+  defp traverse(Ast.mfa(module, _f, _a, meta) = ast, lints, source)
+       when not (is_erlang_module(module) or is_elixir_module(module)) do
+    if Keyword.get(meta, :no_parens, false) == false do
       [new_lint(ast, meta, source) | lints]
     else
-      true -> lints
+      lints
     end
   end
 

@@ -35,6 +35,7 @@ defmodule Ethyl.Lint.MfaAllowlist do
                   use: :*,
                   var!: :*
                 ]},
+               {Kernel.SpecialForms, except: [receive: :*]},
                Map,
                Module,
                {NaiveDateTime, except: [utc_now: :*, local_now: :*]},
@@ -53,10 +54,14 @@ defmodule Ethyl.Lint.MfaAllowlist do
 
   @impl Lint
   def lint(source) do
-    source
-    |> Lint.traverse(&traverse/3, %{lints: [], allowlist: @allowlist})
-    |> Map.fetch!(:lints)
-    |> Enum.reverse()
+    {_ast, state} =
+      Macro.prewalk(
+        source.ast,
+        %{lints: [], allowlist: @allowlist},
+        &traverse(&1, &2, source)
+      )
+
+    Enum.reverse(state.lints)
   end
 
   defp traverse(ast, state, source)
@@ -67,7 +72,7 @@ defmodule Ethyl.Lint.MfaAllowlist do
            :defmodule,
            [{:__aliases__, _, module_path}, _body],
            _meta
-         ),
+         ) = ast,
          state,
          source
        ) do
@@ -76,26 +81,50 @@ defmodule Ethyl.Lint.MfaAllowlist do
       |> Enum.reject(&(&1 == source.context.id))
       |> Module.concat()
 
-    update_in(
-      state.allowlist,
-      &Helpers.allowlist_module(&1, to_module_key(module))
-    )
+    state =
+      update_in(
+        state.allowlist,
+        &Helpers.allowlist_module(&1, to_module_key(module))
+      )
+
+    {ast, state}
   end
 
-  defp traverse(Ast.mfa(m, f, as, meta), state, source)
+  # we treat captures differently because they may encase MFAs, so we could
+  # end up with duplicate lints
+  # we solve this by marking the encased MFA as captured and storing the arity
+  # in the metadata
+  defp traverse(Ast.capture(_, arity, _meta) = ast, state, _source) do
+    # update the MFA's metadata
+    ast =
+      update_in(
+        ast,
+        [Access.elem(2), Access.at(0), Access.elem(2), Access.at(0)],
+        fn mfa ->
+          Macro.update_meta(mfa, &Keyword.put(&1, :captured_arity, arity))
+        end
+      )
+
+    {ast, state}
+  end
+
+  defp traverse(Ast.mfa(m, f, as, meta) = ast, state, source)
        when Ast.is_mfa(m, f, as) do
-    arity = length(as)
+    arity = Keyword.get(meta, :captured_arity, length(as))
 
-    with true <- module?(m),
-         false <- allowed?(m, f, arity, state.allowlist) do
-      update_in(state.lints, &[new_lint(m, f, arity, meta, source) | &1])
-    else
-      _ -> state
-    end
+    state =
+      with true <- module?(m),
+           false <- allowed?(m, f, arity, state.allowlist) do
+        update_in(state.lints, &[new_lint(m, f, arity, meta, source) | &1])
+      else
+        _ -> state
+      end
+
+    {ast, state}
   end
 
-  defp traverse(_ast, state, _source) do
-    state
+  defp traverse(ast, state, _source) do
+    {ast, state}
   end
 
   defp module?({:__aliases__, _, _}), do: true
