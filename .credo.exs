@@ -125,7 +125,7 @@
         {Credo.Check.Warning.BoolOperationOnSameValues},
         {Credo.Check.Warning.ExpensiveEmptyEnumCheck},
         {Credo.Check.Warning.IExPry},
-        {Credo.Check.Warning.IoInspect},
+        {Credo.Check.Warning.IoInspect, false},
         # can remove this because these are all lazy in Elixir 1.7.4
         {Credo.Check.Warning.LazyLogging, false},
         {Credo.Check.Warning.OperationOnSameValues},

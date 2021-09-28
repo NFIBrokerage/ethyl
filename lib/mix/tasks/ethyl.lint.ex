@@ -1,3 +1,4 @@
+# coveralls-ignore-start
 defmodule Mix.Tasks.Ethyl.Lint do
   use Mix.Task
 
@@ -25,3 +26,5 @@ defmodule Mix.Tasks.Ethyl.Lint do
     |> IO.inspect(label: "lints")
   end
 end
+
+# coveralls-ignore-stop
