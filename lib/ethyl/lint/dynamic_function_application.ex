@@ -8,7 +8,7 @@ defmodule Ethyl.Lint.DynamicFunctionApplication do
   """
 
   alias Ethyl.Lint
-  require Ethyl.AstTransforms, as: AstTransforms
+  require Ethyl.AstTransforms, as: Ast
 
   @behaviour Lint
 
@@ -21,16 +21,13 @@ defmodule Ethyl.Lint.DynamicFunctionApplication do
 
   defp traverse(ast, lints, source)
 
-  defp traverse(AstTransforms.mfa(module, _f, _a, meta) = ast, lints, source) do
-    case module do
-      {:__aliases__, _, _} ->
-        lints
-
-      module when is_atom(module) ->
-        lints
-
-      _binding ->
-        [new_lint(ast, meta, source) | lints]
+  defp traverse(Ast.mfa(module, _f, _a, meta) = ast, lints, source) do
+    with false <- match?({:__aliases__, _, _}, module),
+         false <- is_atom(module),
+         false <- Keyword.get(meta, :no_parens, false) do
+      [new_lint(ast, meta, source) | lints]
+    else
+      true -> lints
     end
   end
 
