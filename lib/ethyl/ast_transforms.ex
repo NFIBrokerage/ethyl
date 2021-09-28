@@ -295,8 +295,9 @@ defmodule Ethyl.AstTransforms do
     Macro.prewalk(ast, &do_recursive_expand(&1, __ENV__))
   end
 
-  defp do_recursive_expand({tag, _, _}, env) when tag in @expandable_tags do
-    Macro.expand(tag, env)
+  defp do_recursive_expand({tag, _, _} = ast, env)
+       when tag in @expandable_tags do
+    Macro.expand(ast, env)
   end
 
   defp do_recursive_expand(ast, _env), do: ast
