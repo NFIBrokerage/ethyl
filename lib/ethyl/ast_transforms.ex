@@ -2,7 +2,8 @@ defmodule Ethyl.AstTransforms do
   @moduledoc false
   # functions that transform the AST
 
-  @operator_functions ~w[. / &]a
+  @operator_functions ~w[. / & |>]a
+  @expandable_tags ~w[|>]a
 
   defmacro mfa(m, f, as, meta) do
     quote do
@@ -289,4 +290,14 @@ defmodule Ethyl.AstTransforms do
   end
 
   defp do_expand_apply_3(ast), do: ast
+
+  def recursive_expand(ast) do
+    Macro.prewalk(ast, &do_recursive_expand(&1, __ENV__))
+  end
+
+  defp do_recursive_expand({tag, _, _}, env) when tag in @expandable_tags do
+    Macro.expand(tag, env)
+  end
+
+  defp do_recursive_expand(ast, _env), do: ast
 end

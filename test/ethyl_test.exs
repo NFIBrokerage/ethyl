@@ -93,4 +93,13 @@ defmodule EthylTest do
 
     assert expression.([:a, :b, :c], %{counter: 0}) == %{counter: 3}
   end
+
+  test "the pipe operator works as expected" do
+    expression =
+      ethyl do
+        fn x -> x |> String.trim() end
+      end
+
+    assert expression.("hello ") == "hello"
+  end
 end

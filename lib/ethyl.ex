@@ -28,6 +28,7 @@ defmodule Ethyl do
     |> AstTransforms.alter_compile_directives(context)
     |> AstTransforms.expand_imports()
     |> AstTransforms.expand_apply_3()
+    |> AstTransforms.recursive_expand()
   end
 
   @doc """
