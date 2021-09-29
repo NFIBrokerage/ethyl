@@ -37,7 +37,7 @@ defmodule Ethyl.Lint.MfaAllowlist do
                 ]},
                {Kernel.SpecialForms, except: [receive: :*]},
                Map,
-               Module,
+               {Module, except: [create: :*, eval_quoted: :*]},
                {NaiveDateTime, except: [utc_now: :*, local_now: :*]},
                Regex,
                {String, except: [to_atom: :*]},
