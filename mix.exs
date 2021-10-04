@@ -9,14 +9,21 @@ defmodule Ethyl.MixProject do
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       deps: deps(),
-      test_coverage: [tool: ExCoveralls],
+      test_coverage: [tool: Chaps],
       preferred_cli_env: [
-        coveralls: :test,
-        "coveralls.html": :test,
-        "coveralls.github": :test,
+        chaps: :test,
+        "chaps.html": :test,
+        "chaps.github": :test,
         docs: :dev,
         bless: :test,
         credo: :test
+      ],
+      bless_suite: [
+        compile: ["--warnings-as-errors", "--force"],
+        "chaps.html": [],
+        format: ["--check-formatted"],
+        credo: [],
+        "deps.unlock": ["--check-unused"]
       ]
     ]
   end
@@ -34,7 +41,7 @@ defmodule Ethyl.MixProject do
     [
       {:ex_doc, "~> 0.24", only: [:dev], runtime: false},
       {:credo, "~> 1.0", only: [:test], runtime: false},
-      {:excoveralls, "~> 0.14", only: [:test]},
+      {:chaps, "~> 0.15", only: [:test]},
       {:bless, "~> 1.0", only: [:test]}
     ]
   end

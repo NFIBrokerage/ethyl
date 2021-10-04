@@ -1,4 +1,4 @@
-# coveralls-ignore-start
+# chaps-ignore-start
 defmodule Mix.Tasks.Ethyl.Lint do
   use Mix.Task
 
@@ -27,4 +27,4 @@ defmodule Mix.Tasks.Ethyl.Lint do
   end
 end
 
-# coveralls-ignore-stop
+# chaps-ignore-stop

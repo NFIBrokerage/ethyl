@@ -27,11 +27,11 @@ defmodule Ethyl.AstTransforms do
     end
   end
 
-  # coveralls-ignore-start
+  # chaps-ignore-start
   defguard is_mfa(m, f, a)
            when (is_atom(m) or is_tuple(m)) and is_atom(f) and is_list(a)
 
-  # coveralls-ignore-stop
+  # chaps-ignore-stop
 
   @doc """
   Alter defmodule/2 and import/1 behavior to work more straightforward
@@ -254,10 +254,10 @@ defmodule Ethyl.AstTransforms do
       function_exported?(module, :module_info, 1) ->
         module.module_info(:exports)
 
-      # coveralls-ignore-start
+      # chaps-ignore-start
       true ->
         []
-        # coveralls-ignore-stop
+        # chaps-ignore-stop
     end
   end
 

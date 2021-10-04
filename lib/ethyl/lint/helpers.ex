@@ -1,5 +1,5 @@
 # these are all helpers at compile time, no coverage for me :(
-# coveralls-ignore-start
+# chaps-ignore-start
 defmodule Ethyl.Lint.Helpers do
   @moduledoc false
   # helper functions/macros for writing linters
@@ -49,4 +49,4 @@ defmodule Ethyl.Lint.Helpers do
   end
 end
 
-# coveralls-ignore-stop
+# chaps-ignore-stop
