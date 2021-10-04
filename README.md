@@ -1,6 +1,6 @@
 # Ethyl
 
-![CI](https://github.com/NFIBrokerage/ethyl/workflows/CI/badge.svg)
+![CI](https://github.com/NFIBrokerage/ethyl/workflows/Actions%20CI/badge.svg)
 
 A pure and non-general subset of Elixir
 
