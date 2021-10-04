@@ -27,6 +27,17 @@ defmodule Ethyl.Lint.DynamicFunctionApplication do
 
   defp traverse(ast, lints, source)
 
+  # this catches function captures of bindings by ignoring the `no_parens: true`
+  # in the meta for that application
+  defp traverse(
+         Ast.capture(Ast.mfa(module, _f, _a, meta), _arity, _meta) = ast,
+         lints,
+         source
+       )
+       when not (is_erlang_module(module) or is_elixir_module(module)) do
+    [new_lint(ast, meta, source) | lints]
+  end
+
   defp traverse(Ast.mfa(module, _f, _a, meta) = ast, lints, source)
        when not (is_erlang_module(module) or is_elixir_module(module)) do
     if Keyword.get(meta, :no_parens, false) == false do
