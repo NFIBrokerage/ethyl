@@ -41,7 +41,7 @@ defmodule Ethyl.MixProject do
     [
       {:ex_doc, "~> 0.24", only: [:dev], runtime: false},
       {:credo, "~> 1.0", only: [:test], runtime: false},
-      {:chaps, "~> 0.15", only: [:test]},
+      {:chaps, "~> 0.16", only: [:test]},
       {:bless, "~> 1.0", only: [:test]}
     ]
   end
