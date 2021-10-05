@@ -1,5 +1,5 @@
 %{
-  "bless": {:hex, :bless, "1.1.0", "b27571e49a4ba22d92412184740b186448a27c3ddf2e9e687851e937932b5a60", [:mix], [], "hexpm", "ea5dc19a36609f927d4035a8409393cd3016b5c482245cffa30b3bd6669c617e"},
+  "bless": {:hex, :bless, "1.2.0", "5e8190738dcf2fedcbcee2433b44f0e4629a1b0ce84052e5ba17f8dff48d42bd", [:mix], [], "hexpm", "046692560e401dc33c2bb3223bb3f210c18fafbae24431f0056516bb5c8be805"},
   "bunt": {:hex, :bunt, "0.2.0", "951c6e801e8b1d2cbe58ebbd3e616a869061ddadcc4863d0a2182541acae9a38", [:mix], [], "hexpm", "7af5c7e09fe1d40f76c8e4f9dd2be7cebd83909f31fee7cd0e9eadc567da8353"},
   "chaps": {:hex, :chaps, "0.16.0", "d9ea21ebd4303f2f806c971441a55017d10b3d5b9be2e1170c5267c14087f1da", [:mix], [{:jason, "~> 1.0", [hex: :jason, repo: "hexpm", optional: true]}, {:nimble_options, "~> 0.3 and >= 0.3.7", [hex: :nimble_options, repo: "hexpm", optional: false]}], "hexpm", "9fafaf7537bb813335efeda4bcf82646c8f3078974bfedd3e152b0f1466f0609"},
   "credo": {:hex, :credo, "1.5.6", "e04cc0fdc236fefbb578e0c04bd01a471081616e741d386909e527ac146016c6", [:mix], [{:bunt, "~> 0.2.0", [hex: :bunt, repo: "hexpm", optional: false]}, {:file_system, "~> 0.2.8", [hex: :file_system, repo: "hexpm", optional: false]}, {:jason, "~> 1.0", [hex: :jason, repo: "hexpm", optional: false]}], "hexpm", "4b52a3e558bd64e30de62a648518a5ea2b6e3e5d2b164ef5296244753fc7eb17"},

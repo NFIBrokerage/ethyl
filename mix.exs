@@ -17,13 +17,6 @@ defmodule Ethyl.MixProject do
         docs: :dev,
         bless: :test,
         credo: :test
-      ],
-      bless_suite: [
-        compile: ["--warnings-as-errors", "--force"],
-        "chaps.html": [],
-        format: ["--check-formatted"],
-        credo: [],
-        "deps.unlock": ["--check-unused"]
       ]
     ]
   end
