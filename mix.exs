@@ -1,7 +1,7 @@
 defmodule Ethyl.MixProject do
   use Mix.Project
 
-  @source_url "https://github.com/NFIBrokerage/combustion"
+  @source_url "https://github.com/NFIBrokerage/ethyl"
   @version_file Path.join(__DIR__, ".version")
   @external_resource @version_file
   @version (case Regex.run(~r/^v([\d\.\w-]+)/, File.read!(@version_file),
@@ -54,7 +54,7 @@ defmodule Ethyl.MixProject do
 
   defp package do
     [
-      name: "combustion",
+      name: "ethyl",
       files: ~w(lib .formatter.exs mix.exs README.md .version LICENSE),
       licenses: [],
       links: %{
