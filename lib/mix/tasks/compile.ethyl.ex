@@ -1,81 +1,38 @@
 defmodule Mix.Tasks.Compile.Ethyl do
-  use Mix.Task
-  @recursive true
+  use Mix.Task.Compiler
 
-  @doc false
-  def run(_args) do
+  @recursive true
+  @manifest "compile.ethyl"
+
+  @moduledoc """
+  A task to compile Ethyl expressions into BEAM bytecode
+
+  Compiling Ethyl expressions may be valuable so that one can measure code
+  coverage with a test suite.
+
+  The design of this compiler is loosly based on the [1.12 Elixir
+  compiler](https://github.com/elixir-lang/elixir/blob/a64d42f5d3cb6c32752af9d3312897e8cd5bb7ec/lib/mix/lib/mix/tasks/compile.elixir.ex#L1),
+  but it is adapted for Ethyl's unique structures. Namely, This compiler
+  wraps expressions in superfluous modules. This is necessary to measure
+  coverage with the built-in `:cover` module.
+  """
+
+  @impl Mix.Task.Compiler
+  def run(args) do
+    {opts, _, _} = OptionParser.parse(args, switches: [force: :boolean])
+
     project = Mix.Project.config()
     dest = Mix.Project.compile_path(project)
-    File.mkdir_p!(dest)
 
     srcs =
-      List.wrap(project[:ethylc_globs] || "lib/**/*.exs")
+      (project[:ethylc_globs] || ["lib/**/*.exs"])
       |> Enum.flat_map(&Path.wildcard/1)
+      |> Enum.map(&Path.expand/1)
 
-    _ = Mix.Tasks.Ethyl.Lint.run(srcs)
-
-    srcs
-    |> length()
-    |> compile_message()
-    |> Mix.shell().info()
-
-    srcs
-    |> Task.async_stream(&compile_file(&1, dest), timeout: 20_000)
-    |> Stream.run()
+    Ethyl.Compiler.compile(manifest(), srcs, dest, opts[:force] || false)
   end
 
-  defp compile_file(file, dest) do
-    context = Ethyl.Context.from_filename(file)
-
-    ast =
-      file
-      |> File.read!()
-      |> Code.string_to_quoted!()
-      |> replace_imports_with_remote_calls(Path.dirname(file), dest)
-      |> Ethyl.from_elixir_ast(context)
-
-    ast =
-      quote do
-        defmodule unquote(context.id) do
-          def value do
-            unquote(ast)
-          end
-        end
-      end
-
-    [{module, beam}] = Code.compile_quoted(ast, file)
-
-    file =
-      [dest, Atom.to_string(module) <> ".beam"]
-      |> Path.join()
-      |> File.open!([:write])
-
-    IO.binwrite(file, beam)
-  end
-
-  defp compile_message(1), do: "Compiling 1 file (.exs)"
-  defp compile_message(n), do: "Compiling #{n} files (.exs)"
-
-  # Replace all calls to import/1 (with binaries) with a call to the
-  # compiled module's value/0 callback
-  defp replace_imports_with_remote_calls(ast, path, dest) do
-    Macro.postwalk(ast, fn
-      {:import, _meta, [import_path]} ->
-        file =
-          path
-          |> Path.join(import_path)
-          |> Path.expand()
-
-        compile_file(file, dest)
-
-        module = Ethyl.Context.id_for_filename(file)
-    
-        quote do
-          unquote(Macro.escape(module)).value()
-        end
-
-      ast ->
-        ast
-    end)
-  end
+  @impl Mix.Task.Compiler
+  def manifests, do: [manifest()]
+  def manifest, do: Path.join(Mix.Project.manifest_path(), @manifest)
 end
