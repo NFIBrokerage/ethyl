@@ -33,6 +33,10 @@ defmodule Mix.Tasks.Compile.Ethyl do
   end
 
   @impl Mix.Task.Compiler
+  # chaps-ignore-start
   def manifests, do: [manifest()]
-  def manifest, do: Path.join(Mix.Project.manifest_path(), @manifest)
+
+  # chaps-ignore-stop
+
+  defp manifest, do: Path.join(Mix.Project.manifest_path(), @manifest)
 end
