@@ -18,6 +18,10 @@ defmodule Mix.Tasks.Compile.EthylTest do
       |> Ethyl.Context.id_for_filename()
 
     assert module.value() == 3
+
+    # compiling again with --force recompiles all
+    assert Mix.Tasks.Compile.Ethyl.run(["--force"]) == :ok
+    assert_receive {:mix_shell, :info, ["Compiled 2 files (.exs)"]}
   end
 
   describe "given a corrupted manifest has been written" do
