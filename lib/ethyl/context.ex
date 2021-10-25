@@ -21,4 +21,19 @@ defmodule Ethyl.Context do
 
     %__MODULE__{id: id}
   end
+
+  # these are used internally by the compiler
+  @doc false
+  def from_filename(file) do
+    %__MODULE__{id: id_for_filename(file)}
+  end
+
+  @doc false
+  def id_for_filename(file) do
+    ["Ethyl", file]
+    |> Enum.map(&String.replace(&1, ".", "::"))
+    |> Enum.map(&String.replace(&1, "/", "|"))
+    |> Enum.join("::")
+    |> String.to_atom()
+  end
 end

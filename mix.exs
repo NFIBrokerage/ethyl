@@ -17,6 +17,7 @@ defmodule Ethyl.MixProject do
       version: @version,
       elixir: "~> 1.12",
       elixirc_paths: elixirc_paths(Mix.env()),
+      ethylc_globs: ["test/corpus/compile/*.exs"],
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       test_coverage: [tool: Chaps],
