@@ -4,6 +4,25 @@
 
 A pure and non-general subset of Elixir
 
+### Status
+
+We've abandoned the Ethyl effort. Needing to restrict the language and change
+the behavior of `import/1` is not great, so we tried another approach based
+on `khepri`'s
+[`khepri_fun`](https://github.com/rabbitmq/khepri/blob/53a8ad8022369b07ccaf34693b0d6b538b51f810/src/khepri_fun.erl),
+which is similar in spirit to
+[Safeish](https://github.com/robinhilliard/safeish). That effort got much
+further but we ended up abandoning that too as writing purely functional
+Elixir that never depends on outside values like the current time or the
+availability of modules ends up being very unergonomic. In particular, we
+would've had to abandon or fork Ecto (it uses dynamic application in a way
+that is tough to refactor), and we use Ecto extensively. The takeaways of
+this project are still valuable, though. Writing side-effects in a monad-like
+fashion where you declare your intent and then a runtime environment commits
+the side-effects based on that description works well. (As opposed to
+performing side-effects in an imperative manner.) That approach can reduce
+boilerplate and simplify testing.
+
 ### About
 
 Ethyl is a subset of the Elixir general-purpose programming language written
